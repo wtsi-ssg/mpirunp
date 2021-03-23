@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/wtsi-ssg/mpirunp/environment/lsf"
 	"github.com/wtsi-ssg/mpirunp/port"
 )
 
 func main() {
-	portsNeeded := 67
+	hosts := lsf.Hosts()
+	fmt.Printf("Working with %d hosts\n", len(hosts))
+	portsNeeded := len(hosts) + 3
 
 	checker, err := port.NewChecker("localhost")
 	if err != nil {
