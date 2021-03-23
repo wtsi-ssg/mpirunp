@@ -115,18 +115,15 @@ func TestPort(t *testing.T) {
 		})
 
 		Convey("You can get a range of available ports", func() {
-			ports, err := checker.AvailableRange(2)
+			min, max, err := checker.AvailableRange(2)
 			So(err, ShouldBeNil)
-			So(len(ports), ShouldEqual, 2)
-			So(ports[0], ShouldBeBetweenOrEqual, 1, maxPort)
-			So(ports[1], ShouldEqual, ports[0]+1)
+			So(min, ShouldBeBetweenOrEqual, 1, maxPort)
+			So(max, ShouldEqual, min+1)
 
-			ports, err = checker.AvailableRange(67)
+			min, max, err = checker.AvailableRange(67)
 			So(err, ShouldBeNil)
-			So(len(ports), ShouldEqual, 67)
-			So(ports[0], ShouldBeBetweenOrEqual, 1, maxPort)
-			So(ports[1], ShouldEqual, ports[0]+1)
-			So(ports[66], ShouldEqual, ports[0]+66)
+			So(min, ShouldBeBetweenOrEqual, 1, maxPort)
+			So(max, ShouldEqual, min+66)
 		})
 	})
 }

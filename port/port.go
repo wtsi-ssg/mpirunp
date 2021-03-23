@@ -29,13 +29,14 @@ func NewChecker(host string) (*Checker, error) {
 }
 
 // AvailableRange asks the operating system for ports until it is given a
-// contiguous range of ports size long. It returns those port numbers, having
-// released all the ports it took, so they are ready for you to use.
+// contiguous range of ports size long. It returns the first and last of those
+// port numbers, having released all the ports it took, so they are ready for
+// you to use.
 //
 // NB: there is the potential for a race condition here, where once released,
 // another process gets one of the ports before you use it, so start listening
 // on all the returned ports as soon as possible after calling this.
-func (c *Checker) AvailableRange(size int) ([]int, error) {
+func (c *Checker) AvailableRange(size int) (int, int, error) {
 	var err error
 	defer func() {
 		errr := c.release()
@@ -56,11 +57,12 @@ func (c *Checker) AvailableRange(size int) ([]int, error) {
 		}
 
 		if set, has := c.checkRange(port, size); has {
-			return set, err
+			min, max := firstAndLast(set)
+			return min, max, err
 		}
 	}
 
-	return nil, err
+	return 0, 0, err
 }
 
 func (c *Checker) availablePort() (int, error) {
@@ -133,4 +135,8 @@ func (c *Checker) release() error {
 	}
 
 	return err
+}
+
+func firstAndLast(s []int) (min, max int) {
+	return s[0], s[len(s)-1]
 }

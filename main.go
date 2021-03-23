@@ -19,11 +19,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	ports, err := checker.AvailableRange(portsNeeded)
+	min, max, err := checker.AvailableRange(portsNeeded)
 	if err != nil {
 		fmt.Printf("Getting a range of %d contiguous ports failed: %s\n", portsNeeded, err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("got ports %v\n", ports)
+	fmt.Printf("got port range %d..%d\n", min, max)
 }
