@@ -2,25 +2,25 @@ package main
 
 import (
 	"fmt"
-	"time"
+	"os"
 
-	"github.com/wtsi-ssg/mpirunp/portscan"
-	"github.com/wtsi-ssg/mpirunp/ulimit"
-	"golang.org/x/sync/semaphore"
+	"github.com/wtsi-ssg/mpirunp/port"
 )
 
 func main() {
-	limiter := semaphore.NewWeighted(ulimit.Ulimit())
-	timeout := 500 * time.Millisecond
+	portsNeeded := 67
 
-	ps := portscan.New("127.0.0.1", limiter, timeout)
-	available := ps.AvailablePorts(1, 65535)
-	fmt.Printf("%d available ports\n", len(available))
-
-	free, err := portscan.GetFreePorts(1000)
+	checker, err := port.NewChecker("localhost")
 	if err != nil {
-		fmt.Printf("Free failed: %s\n", err)
-	} else {
-		fmt.Printf("%d free ports:\n%v\n", len(free), free)
+		fmt.Printf("Making a port checker failed: %s\n", err)
+		os.Exit(1)
 	}
+
+	ports, err := checker.AvailableRange(portsNeeded)
+	if err != nil {
+		fmt.Printf("Getting a range of %d contiguous ports failed: %s\n", portsNeeded, err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("got ports %v\n", ports)
 }
