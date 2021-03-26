@@ -134,6 +134,9 @@ func (c *Checker) release() error {
 		}
 	}
 
+	c.listeners = nil
+	c.ports = make(map[int]bool)
+
 	return err
 }
 

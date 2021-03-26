@@ -1,13 +1,18 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/wtsi-ssg/mpirunp/environment/lsf"
 	"github.com/wtsi-ssg/mpirunp/mpirun"
 	"github.com/wtsi-ssg/mpirunp/port"
+	"github.com/wtsi-ssg/wr/backoff"
+	btime "github.com/wtsi-ssg/wr/backoff/time"
+	"github.com/wtsi-ssg/wr/retry"
 )
 
 func main() {
@@ -29,6 +34,20 @@ func main() {
 		os.Exit(1)
 	}
 
+	op := func() error {
+		return runmpi(outPath, checker, portsNeeded)
+	}
+
+	backoff := &backoff.Backoff{Min: 1 * time.Second, Max: 30 * time.Second, Factor: 1.5, Sleeper: &btime.Sleeper{}}
+	status := retry.Do(context.Background(), op, retry.Untils{&retry.UntilLimit{Max: 20}, &retry.UntilNoError{}}, backoff, "run mpi")
+	fmt.Printf("%s\n", status.String())
+
+	if status.StoppedBecause != retry.BecauseErrorNil {
+		os.Exit(1)
+	}
+}
+
+func runmpi(outPath string, checker *port.Checker, portsNeeded int) error {
 	min, max, err := checker.AvailableRange(portsNeeded)
 	if err != nil {
 		fmt.Printf("Getting a range of %d contiguous ports failed: %s\n", portsNeeded, err)
@@ -48,12 +67,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	cmd := wrapper.Command(flag.Args()...)
-	fmt.Printf("Will run: %s\n", cmd.String())
+	fmt.Printf("Will run: %s\n", wrapper.Command(flag.Args()...).String())
 
 	err = wrapper.Execute(flag.Args()...)
 	if err != nil {
 		fmt.Printf("Execution of mpirun failed: %s\n", err)
-		os.Exit(1)
 	}
+
+	return err
 }
